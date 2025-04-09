@@ -30,13 +30,14 @@ jobs:
         sudo apt install -y mono-devel
       
 
-    - name: C# 컴파일
+    - name: C# 컴파일 (라이브러리 형태)
       run: |
         mkdir -p build/csharp
         for file in csharp/*.cs; do
           filename=$(basename "$file" .cs)
-          mcs "$file" -out:"build/csharp/${filename}.exe"
+          mcs -target:library "$file" -out:"build/csharp/${filename}.dll"
         done
+      
 
     - name: Kotlin 컴파일
       uses: actions/setup-java@v3
