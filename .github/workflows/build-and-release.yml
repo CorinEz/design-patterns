@@ -2,58 +2,62 @@ name: Build and Release
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: 저장소 체크아웃
       uses: actions/checkout@v4
 
-    - name: Set up .NET (for C#)
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
+    - name: C++ 컴파일
+      run: |
+        mkdir -p build/cpp
+        g++ cpp/*.cpp -o build/cpp/design_patterns_cpp
 
-    - name: Set up Java (for Kotlin)
+    - name: C# 컴파일
+      run: |
+        mkdir -p build/csharp
+        for file in csharp/*.cs; do
+          filename=$(basename "$file" .cs)
+          mcs "$file" -out:"build/csharp/${filename}.exe"
+        done
+
+    - name: Kotlin 컴파일
       uses: actions/setup-java@v3
       with:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Install Kotlin compiler
+    - name: kotlinc 설치
       run: |
         sudo apt-get update
         sudo apt-get install -y kotlin
 
-    - name: Build C++ project
-      run: |
-        mkdir -p build/cpp
-        g++ your_cpp_file.cpp -o build/cpp/app_cpp
-
-    - name: Build C# project
-      run: |
-        mkdir -p build/csharp
-        dotnet build your_csharp_project.csproj -c Release -o build/csharp
-
-    - name: Build Kotlin project
+    - name: Kotlin 빌드
       run: |
         mkdir -p build/kotlin
-        kotlinc your_kotlin_file.kt -include-runtime -d build/kotlin/app_kotlin.jar
+        for file in kotlin/*.kt; do
+          filename=$(basename "$file" .kt)
+          kotlinc "$file" -include-runtime -d "build/kotlin/${filename}.jar"
+        done
 
-    - name: Archive build outputs
+    - name: 결과 압축
       run: |
         cd build
-        zip -r build_output.zip cpp csharp kotlin
-      working-directory: ./build
+        zip -r compiled_artifacts.zip .
 
-    - name: Create GitHub Release
+    - name: GitHub Release 생성
       uses: softprops/action-gh-release@v2
       with:
-        files: build/build_output.zip
+        name: "자동 릴리즈 - ${{ github.run_number }}"
+        tag_name: "v${{ github.run_number }}"
+        files: build/compiled_artifacts.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
