@@ -16,10 +16,14 @@ jobs:
     - name: 저장소 체크아웃
       uses: actions/checkout@v4
 
-    - name: C++ 컴파일
+    - name: C++ 개별 컴파일
       run: |
         mkdir -p build/cpp
-        g++ cpp/*.cpp -o build/cpp/design_patterns_cpp
+        for file in cpp/*.cpp; do
+          filename=$(basename "$file" .cpp)
+          g++ "$file" -o "build/cpp/${filename}"
+        done
+    
 
     - name: C# 컴파일
       run: |
