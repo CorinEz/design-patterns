@@ -16,14 +16,19 @@ jobs:
     - name: 저장소 체크아웃
       uses: actions/checkout@v4
 
-    - name: C++ 개별 컴파일
+    - name: C++ 컴파일
       run: |
         mkdir -p build/cpp
         for file in cpp/*.cpp; do
           filename=$(basename "$file" .cpp)
           g++ "$file" -o "build/cpp/${filename}"
         done
-    
+
+    - name: Mono 설치 (C# 컴파일러)
+      run: |
+        sudo apt update
+        sudo apt install -y mono-devel
+      
 
     - name: C# 컴파일
       run: |
