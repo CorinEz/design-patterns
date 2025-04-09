@@ -1,0 +1,59 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up .NET (for C#)
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Set up Java (for Kotlin)
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install Kotlin compiler
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y kotlin
+
+    - name: Build C++ project
+      run: |
+        mkdir -p build/cpp
+        g++ your_cpp_file.cpp -o build/cpp/app_cpp
+
+    - name: Build C# project
+      run: |
+        mkdir -p build/csharp
+        dotnet build your_csharp_project.csproj -c Release -o build/csharp
+
+    - name: Build Kotlin project
+      run: |
+        mkdir -p build/kotlin
+        kotlinc your_kotlin_file.kt -include-runtime -d build/kotlin/app_kotlin.jar
+
+    - name: Archive build outputs
+      run: |
+        cd build
+        zip -r build_output.zip cpp csharp kotlin
+      working-directory: ./build
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: build/build_output.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
